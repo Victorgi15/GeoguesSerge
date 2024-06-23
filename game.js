@@ -27,7 +27,7 @@ function initMap() {
         attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
         maxZoom: 18,
     }).addTo(map);
-
+    map.setZoom(4);
 
     map.on('click', function (e) {
         onMapClick(e);
@@ -91,7 +91,19 @@ async function onValidateBtnClick() {
 
         // Centrer la vue et ajuster le zoom
         const bounds = L.latLngBounds([guessLatLng, currentSergePosition.pos]);
-        map.fitBounds(bounds, { padding: [10, 90], maxZoom: 10 }); // Ajuster le padding et le zoom maximum si nécessaire
+        let maxZoom;
+        console.log(distance)
+        console.log(distance > 6000)
+        if (distance > 6000) {
+            maxZoom = 3;
+        } else if (distance <= 6000 && distance > 4000) {
+            maxZoom = 4;
+        } else {
+            maxZoom = 8;
+        }
+        console.log(maxZoom);
+        
+        map.fitBounds(bounds, { padding: [50, 50], maxZoom: maxZoom }); // Ajuster le padding et le zoom maximum si nécessaire
         
         const score = calculateScoreFromDistance(distance);
         await addScore(score)
