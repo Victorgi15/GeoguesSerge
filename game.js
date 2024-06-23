@@ -1,6 +1,7 @@
 //Variables for the game
 let marker;
 let currentSergePosition = getSergeCurrentPos();
+console.log("currentSergePosition", currentSergePosition)
 let guessLine;
 let gameInProgress = true; // Variable pour suivre l'état du jeu
 
@@ -34,13 +35,30 @@ function initMap() {
     });
 }
 
-function getSergeCurrentPos() {
-    //TODO retrieve current game position from database 'serge pos' table
-    return {
-        id: '1',
-        pos: {lat: 48.8566, lng: 2.3522}
-    };
-}
+async function getSergeCurrentPos() {
+    const { data, error } = await db_client
+        .from('Serge_Pos')
+        .select('*')
+        .order('position_date', { ascending: false })
+        .limit(1);
+
+    if (error) {
+        console.error('Error fetching data:', error);
+        alert('Erreur lors de la récupération des données: ' + error.message);
+    } else {
+        if (data.length > 0) {
+            const latestPosition = data[0];
+            return {
+            id:latestPosition.id,
+            pos:{ lat: latestPosition.lat, lng: latestPosition.lon}
+            }
+        }
+        else {
+            console.log('Aucune position trouvée.');
+            alert('Aucune position trouvée.');
+            }      
+        }
+    }
 
 function onMapClick(e) {
     if (gameInProgress) {
@@ -62,57 +80,65 @@ function onMapClick(e) {
 async function onValidateBtnClick() {
     if (marker) {
         const guessLatLng = marker.getLatLng();
-        const distance = map.distance(guessLatLng, currentSergePosition.pos) / 1000; // Convertir en kilomètres
-        Toastify({
-            text: `Distance: ${distance.toFixed(0)} km`, // Utiliser toFixed(0) pour arrondir à zéro décimale
-            duration: 3000,
-            gravity: "top",
-            position: "center",
-            backgroundColor: "#007bff",
-        }).showToast();
-
-        // Supprimer le marker de la position correcte si existant
-        map.eachLayer(function (layer) {
-            if (layer.getLatLng && layer.getLatLng().equals(currentSergePosition.pos)) {
-                map.removeLayer(layer);
+        
+        try {
+            const result = await currentSergePosition;
+            const { lat, lng } = result.pos; // Destructuring pour extraire lat et lng de result.pos
+        
+            const distance = map.distance(guessLatLng, { lat, lng }) / 1000; // Convertir en kilomètres
+        
+            console.log('Distance calculée:', distance);
+        
+            Toastify({
+                text: `Distance: ${distance.toFixed(0)} km`, // Utiliser toFixed(0) pour arrondir à zéro décimale
+                duration: 3000,
+                gravity: "top",
+                position: "center",
+                backgroundColor: "#007bff",
+            }).showToast();
+    
+            // Supprimer le marker de la position correcte si existant
+            map.eachLayer(function (layer) {
+                if (layer.getLatLng && layer.getLatLng().equals(result.pos)) {
+                    map.removeLayer(layer);
+                }
+            });
+    
+            // Ajouter un marker à la position correcte
+            L.marker(result.pos).addTo(map)
+                .bindPopup('Position correcte')
+                .openPopup();
+    
+            // Dessiner une ligne entre le guess et la position réelle
+            if (guessLine) {
+                map.removeLayer(guessLine);
             }
-        });
-
-        // Ajouter un marker à la position correcte
-        L.marker(currentSergePosition.pos).addTo(map)
-            .bindPopup('Position correcte')
-            .openPopup();
-
-        // Dessiner une ligne entre le guess et la position réelle
-        if (guessLine) {
-            map.removeLayer(guessLine);
+            guessLine = L.polyline([guessLatLng, result.pos], {color: 'red'}).addTo(map);
+    
+            // Centrer la vue et ajuster le zoom
+            const bounds = L.latLngBounds([guessLatLng, result.pos]);
+            let maxZoom;
+            if (distance > 6000) {
+                maxZoom = 3;
+            } else if (distance <= 6000 && distance > 4000) {
+                maxZoom = 4;
+            } else {
+                maxZoom = 8;
+            }
+            
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: maxZoom });
+            
+            const score = calculateScoreFromDistance(distance);
+            await addScore(score);
+    
+            // Afficher le leaderboard
+            displayLeaderboard();
+    
+            // Marquer la fin du jeu
+            gameInProgress = false;
+        } catch (error) {
+            console.error('Erreur lors de l\'accès aux données de position:', error);
         }
-        guessLine = L.polyline([guessLatLng, currentSergePosition.pos], {color: 'red'}).addTo(map);
-
-        // Centrer la vue et ajuster le zoom
-        const bounds = L.latLngBounds([guessLatLng, currentSergePosition.pos]);
-        let maxZoom;
-        console.log(distance)
-        console.log(distance > 6000)
-        if (distance > 6000) {
-            maxZoom = 3;
-        } else if (distance <= 6000 && distance > 4000) {
-            maxZoom = 4;
-        } else {
-            maxZoom = 8;
-        }
-        console.log(maxZoom);
-        
-        map.fitBounds(bounds, { padding: [50, 50], maxZoom: maxZoom }); // Ajuster le padding et le zoom maximum si nécessaire
-        
-        const score = calculateScoreFromDistance(distance);
-        await addScore(score)
-
-        // Afficher le leaderboard
-        displayLeaderboard();
-
-        // Marquer la fin du jeu
-        gameInProgress = false;
     } else {
         Toastify({
             text: "Please click on the map to place a pin.",
@@ -123,6 +149,7 @@ async function onValidateBtnClick() {
         }).showToast();
     }
 }
+
 
 /**
  * Get best scores from database
