@@ -1,15 +1,48 @@
-var map = L.map('mapid').setView([51.505, -0.09], 2); // Centrer la carte sur une vue globale
+//Variables for the game
+let marker;
+let currentSergePosition = getSergeCurrentPos();
+let guessLine;
+let gameInProgress = true; // Variable pour suivre l'état du jeu
 
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 18,
-}).addTo(map);
+// Observe game_container visibility changes and init map on visible
+let observer = new MutationObserver(function () {
+    if (!game_container.hidden) {
+        initMap();
+    }
+});
+observer.observe(game_container, {attributes: true, childList: true});
 
-var marker;
-var actualPosition = { lat: 48.8566, lng: 2.3522 }; // Exemple: Paris
-var guessLine;
-var gameInProgress = true; // Variable pour suivre l'état du jeu
+document.getElementById('validateBtn').addEventListener('click', async function () {
+    await onValidateBtnClick();
+});
 
-map.on('click', function(e) {
+// Afficher le leaderboard
+displayLeaderboard();
+
+// Functions for the game
+function initMap() {
+    map = L.map('map').setView([51.505, -0.09], 18); // Centrer la carte sur une vue globale
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, <a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>',
+        maxZoom: 18,
+    }).addTo(map);
+
+
+    map.on('click', function (e) {
+        onMapClick(e);
+    });
+}
+
+function getSergeCurrentPos() {
+    //TODO retrieve current game position from database 'serge pos' table
+    return {
+        id: '1',
+        pos: {lat: 48.8566, lng: 2.3522}
+    };
+}
+
+function onMapClick(e) {
     if (gameInProgress) {
         if (marker) {
             map.removeLayer(marker);
@@ -17,31 +50,19 @@ map.on('click', function(e) {
         marker = L.marker(e.latlng).addTo(map);
     } else {
         Toastify({
-            text: "Game is over. Please reset to play again.",
+            text: "You have already guessed the position. Retry new time.",
             duration: 3000,
             gravity: "top",
             position: "center",
             backgroundColor: "#f00",
         }).showToast();
     }
-});
+}
 
-document.getElementById('validateBtn').addEventListener('click', function() {
-    var playerName = document.getElementById('playerName').value;
-    if (!playerName) {
-        Toastify({
-            text: "Please enter your name.",
-            duration: 3000,
-            gravity: "top",
-            position: "center",
-            backgroundColor: "#f00",
-        }).showToast();
-        return;
-    }
-
+async function onValidateBtnClick() {
     if (marker) {
-        var guessLatLng = marker.getLatLng();
-        var distance = map.distance(guessLatLng, actualPosition) / 1000; // Convertir en kilomètres
+        const guessLatLng = marker.getLatLng();
+        const distance = map.distance(guessLatLng, currentSergePosition.pos) / 1000; // Convertir en kilomètres
         Toastify({
             text: `Distance: ${distance.toFixed(0)} km`, // Utiliser toFixed(0) pour arrondir à zéro décimale
             duration: 3000,
@@ -51,14 +72,14 @@ document.getElementById('validateBtn').addEventListener('click', function() {
         }).showToast();
 
         // Supprimer le marker de la position correcte si existant
-        map.eachLayer(function(layer) {
-            if (layer.getLatLng && layer.getLatLng().equals(actualPosition)) {
+        map.eachLayer(function (layer) {
+            if (layer.getLatLng && layer.getLatLng().equals(currentSergePosition.pos)) {
                 map.removeLayer(layer);
             }
         });
 
         // Ajouter un marker à la position correcte
-        L.marker(actualPosition).addTo(map)
+        L.marker(currentSergePosition.pos).addTo(map)
             .bindPopup('Position correcte')
             .openPopup();
 
@@ -66,30 +87,10 @@ document.getElementById('validateBtn').addEventListener('click', function() {
         if (guessLine) {
             map.removeLayer(guessLine);
         }
-        guessLine = L.polyline([guessLatLng, actualPosition], { color: 'red' }).addTo(map);
+        guessLine = L.polyline([guessLatLng, currentSergePosition.pos], {color: 'red'}).addTo(map);
 
-        // Enregistrer le score dans le stockage local
-        var scores = JSON.parse(localStorage.getItem('scores')) || [];
-        scores.push({ name: playerName, distance: distance });
-        localStorage.setItem('scores', JSON.stringify(scores));
-
-        // Enregistrer le score dans la database
-
-        // Fonction pour ajouter un score
-        async function addScore(name, distance) {
-            const { data, error } = await db_client
-                .from('score')
-                .insert([{ name, distance }]);
-
-            if (error) {
-                console.error('Error:', error);
-            } else {
-                console.log('Score added:', data);
-            }
-        }
-        
-        addScore(playerName, distance)
-
+        const score = calculateScoreFromDistance(distance);
+        await addScore(score)
 
         // Afficher le leaderboard
         displayLeaderboard();
@@ -105,83 +106,95 @@ document.getElementById('validateBtn').addEventListener('click', function() {
             backgroundColor: "#f00",
         }).showToast();
     }
-});
+}
 
-document.getElementById('resetBtn').addEventListener('click', function() {
-    var adminPassword = prompt('Please enter the admin password to reset the leaderboard:');
-    var correctPassword = 'admin123'; // Change this to your desired password
-
-    if (adminPassword === correctPassword) {
-        if (confirm('Are you sure you want to reset the leaderboard?')) {
-            localStorage.removeItem('scores');
-            displayLeaderboard();
-            Toastify({
-                text: "Leaderboard reset successfully.",
-                duration: 3000,
-                gravity: "top",
-                position: "center",
-                backgroundColor: "#28a745",
-            }).showToast();
+/**
+ * Get best scores from database
+ * @param gameId
+ * @param limit
+ */
+function getBestScores(gameId, limit) {
+    //TODO retrieve best scores from database 'scores' table
+    // with the current game position ID and limit
+    return [
+        {
+            user_id: '123e4567-e89b-12d3-a456-426614174000',
+            score: 5000
+        },
+        {
+            user_id: '123e4567-e89b-12d3-a456-426614174001',
+            score: 4000
+        },
+        {
+            user_id: '123e4567-e89b-12d3-a456-426614174002',
+            score: 3000
+        },
+        {
+            user_id: '123e4567-e89b-12d3-a456-426614174003',
+            score: 2000
+        },
+        {
+            user_id: '123e4567-e89b-12d3-a456-426614174004',
+            score: 1000
         }
-    } else {
-        Toastify({
-            text: "Incorrect password. Access denied.",
-            duration: 3000,
-            gravity: "top",
-            position: "center",
-            backgroundColor: "#f00",
-        }).showToast();
-    }
-});
-
-document.getElementById('resetGameBtn').addEventListener('click', function() {
-    // Réinitialiser la carte et les marqueurs
-    if (marker) {
-        map.removeLayer(marker);
-        marker = null;
-    }
-    if (guessLine) {
-        map.removeLayer(guessLine);
-        guessLine = null;
-    }
-
-    // Réinitialiser le champ de saisie du nom du joueur
-    document.getElementById('playerName').value = '';
-
-    // Supprimer le marker de la position correcte si existant
-    map.eachLayer(function(layer) {
-        if (layer.getLatLng && layer.getLatLng().equals(actualPosition)) {
-            map.removeLayer(layer);
-        }
-    });
-
-    // Marquer le début d'un nouveau jeu
-    gameInProgress = true;
-
-    // Réinitialiser les notifications
-    Toastify({
-        text: "Game reset successfully.",
-        duration: 3000,
-        gravity: "top",
-        position: "center",
-        backgroundColor: "#28a745",
-    }).showToast();
-});
+    ];
+}
 
 function displayLeaderboard() {
-    var scores = JSON.parse(localStorage.getItem('scores')) || [];
-    scores.sort((a, b) => a.distance - b.distance);
-    if (!leaderboard) {
-        leaderboard = document.createElement('div');
-        leaderboard.id = 'leaderboard';
-        document.body.appendChild(leaderboard);
-    }
+    // TODO retrieve current leaderboard from database 'scores' table
+    // with the current game position ID
+    const currentGameBestScores = getBestScores(currentSergePosition.id, 5);
+    const allTimeBestScores = getBestScores(null, 5);
 
-    leaderboard.innerHTML = '<h2>Leaderboard</h2>';
-    scores.forEach((score, index) => {
-        leaderboard.innerHTML += `<p>${index + 1}. ${score.name}: ${score.distance.toFixed(0)} km</p>`; // Utiliser toFixed(0) pour arrondir à zéro décimale
+    const allTimeBoard = document.getElementById('allTimeBoard');
+    const currentBoard = document.getElementById('currentBoard');
+
+    allTimeBoard.innerHTML = '';
+    currentBoard.innerHTML = '';
+
+    allTimeBestScores.forEach((score, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
+        allTimeBoard.appendChild(li);
+    });
+
+    currentGameBestScores.forEach((score, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
+        currentBoard.appendChild(li);
     });
 }
 
-// Afficher le leaderboard
-displayLeaderboard();
+// Fonction pour ajouter un score
+async function addScore(score) {
+    const {data, error} = await db_client
+        .from('scores')
+        .insert([{
+            serge_pos_id: currentSergePosition.id,
+            user_id: db_client.auth.getUser().id,
+            score: score
+        }]);
+
+    if (error) {
+        console.error('Error:', error);
+    } else {
+        console.log('Score added:', data);
+    }
+}
+
+/** Calculate like geoguessr a score from the distance
+ *
+ * score = 5000 * (1 - (pi * r^2) / (area of map))
+ *
+ * Where:
+ *
+ * r is the distance away from the actual start point
+ * pi is the mathematical constant pi
+ * area of map is the area of the map being used
+ * @param distance
+ */
+function calculateScoreFromDistance(distance) {
+    const radius = 6371; // Earth's radius in kilometers
+    const areaOfMap = 510100000; // Area of the map in square kilometers
+    return 5000 * (1 - (Math.PI * Math.pow(distance, 2)) / areaOfMap);
+}
