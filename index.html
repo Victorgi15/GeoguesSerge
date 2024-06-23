@@ -5,55 +5,77 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GeoguesSerge</title>
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
     <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-    <div class='container' id="game">
-    <h1>GeoguesSerge</h1>
-    <p>Guess where Serge is now</p>
-    <p id="lastUpdate">Last Serge's position updated : 21 juin 2024</p>
-    <div id="mapid"></div>
-    <input type="text" id="playerName" placeholder="Enter your name">
-    <div id="buttonContainer">
+
+<div class='container' id="game">
+    <div id="map"></div>
+    <header>
+        <h1>GeoguesSerge</h1>
+        <p id="lastUpdate">Last Serge's position updated : 21 juin 2024</p>
+    </header>
+    <aside id="leaderboards">
+        <h2>Leaderboards</h2>
+        <div class="board">
+            <h3>Overall</h3>
+            <ol id="allTimeBoard">
+                <li>1. Serge</li>
+                <li>2. Serge</li>
+                <li>3. Serge</li>
+                <li>4. Serge</li>
+                <li>5. Serge</li>
+            </ol>
+        </div>
+        <div class="board">
+            <h3>Current Game</h3>
+            <ol id="currentBoard">
+                <li>1. Serge</li>
+                <li>2. Serge</li>
+                <li>3. Serge</li>
+                <li>4. Serge</li>
+                <li>5. Serge</li>
+            </ol>
+        </div>
+    </aside>
+    <footer>
         <button id="validateBtn">Guess</button>
-        <button id="resetGameBtn">Reset Game</button>
-        <button id="resetBtn">Reset Leaderboard</button>
+    </footer>
+
+</div>
+<div class='container' id="auth">
+    <div class='section'>
+        <h1>GeoguesSerge Login</h1>
     </div>
-    <div id="leaderboard"></div>
+    <div class='section'>
+        <form id='sign-up'>
+            <h3>Sign Up</h3>
+            <label>Email</label><input type='email' name='email'/>
+            <label>Password</label><input type='password' name='password'/>
+            <input type='submit'>
+        </form>
     </div>
-    <div class='container' id="auth">
-        <div class='section'>
-            <h1>GeoguesSerge Login</h1>
-        </div>
-        <div class='section'>
-            <form id='sign-up'>
-                <h3>Sign Up</h3>
-                <label>Email</label><input type='email' name='email' />
-                <label>Password</label><input type='password' name='password' />
-                <input type='submit'>
-            </form>
-        </div>
-        <div class='section'>
-            <form id='log-in'>
-                <h3>Log In</h3>
-                <label>Email</label><input type='email' name='email' />
-                <label>Password</label><input type='password' name='password' />
-                <input type='submit'>
-            </form>
-        </div>
-        <div class='section'>
-            <h3>Logout</h3>
-            <button id='logout-button'>Logout</button>
-        </div>
+    <div class='section'>
+        <form id='log-in'>
+            <h3>Log In</h3>
+            <label>Email</label><input type='email' name='email'/>
+            <label>Password</label><input type='password' name='password'/>
+            <input type='submit'>
+        </form>
     </div>
+    <div class='section'>
+        <h3>Logout</h3>
+        <button id='logout-button'>Logout</button>
+    </div>
+</div>
 </body>
 <footer>
-    <script src="script.js"></script>
-    <script src="auth.js"></script>
-    <script src="game.js"></script>
+    <script src="./script.js"></script>
+    <script src="./auth.js"></script>
+    <script src="./game.js"></script>
 </footer>
 </html>
