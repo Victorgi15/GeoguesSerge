@@ -129,6 +129,7 @@ async function onValidateBtnClick() {
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: maxZoom });
             
             const score = calculateScoreFromDistance(distance);
+            console.log("score : ", score)
             await addScore(score);
     
             // Afficher le leaderboard
@@ -210,20 +211,37 @@ function displayLeaderboard() {
 
 // Fonction pour ajouter un score
 async function addScore(score) {
-    const {data, error} = await db_client
-        .from('scores')
-        .insert([{
-            serge_pos_id: currentSergePosition.id,
-            user_id: db_client.auth.getUser().id,
-            score: score
-        }]);
+    try {
+        const user = await db_client.auth.getUser();
 
-    if (error) {
-        console.error('Error:', error);
-    } else {
-        console.log('Score added:', data);
+        if (!user || !user.data) {
+            console.error('Erreur : utilisateur non authentifié ou données utilisateur introuvables');
+            return;
+        }
+        const sergePosition = await currentSergePosition;
+
+        if (!sergePosition || !sergePosition.id) {
+            console.error('Erreur : position Serge non valide');
+            return;
+        }
+        const { data, error } = await db_client
+            .from('scores')
+            .insert([{
+                serge_pos_id: sergePosition.id,
+                user_id: user.data.user.id,
+                score: score
+            }]);
+
+        if (error) {
+            console.error('Erreur lors de l\'insertion du score :', error);
+        } else {
+            console.log('Score ajouté avec succès:', data);
+        }
+    } catch (error) {
+        console.error('Erreur lors de l\'ajout du score:', error);
     }
 }
+
 
 /** Calculate like geoguessr a score from the distance
  *
@@ -237,7 +255,12 @@ async function addScore(score) {
  * @param distance
  */
 function calculateScoreFromDistance(distance) {
-    const radius = 6371; // Earth's radius in kilometers
-    const areaOfMap = 510100000; // Area of the map in square kilometers
-    return 5000 * (1 - (Math.PI * Math.pow(distance, 2)) / areaOfMap);
+    //const radius = 6371; // Earth's radius in kilometers
+    // const areaOfMap = 510100000; // Area of the map in square kilometers
+    // return 5000 * (1 - (Math.PI * Math.pow(distance, 2)) / areaOfMap);
+
+    if (distance<2000){
+        return Math.trunc(-distance + 5000)
+    }
+    else return(0)
 }
