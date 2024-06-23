@@ -89,6 +89,10 @@ async function onValidateBtnClick() {
         }
         guessLine = L.polyline([guessLatLng, currentSergePosition.pos], {color: 'red'}).addTo(map);
 
+        // Centrer la vue et ajuster le zoom
+        const bounds = L.latLngBounds([guessLatLng, currentSergePosition.pos]);
+        map.fitBounds(bounds, { padding: [10, 90], maxZoom: 10 }); // Ajuster le padding et le zoom maximum si nécessaire
+        
         const score = calculateScoreFromDistance(distance);
         await addScore(score)
 
