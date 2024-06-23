@@ -12,6 +12,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
+    <div class='container' id="game">
     <h1>GeoguesSerge</h1>
     <p>Guess where Serge is now</p>
     <p id="lastUpdate">Last Serge's position updated : 21 juin 2024</p>
@@ -23,8 +24,36 @@
         <button id="resetBtn">Reset Leaderboard</button>
     </div>
     <div id="leaderboard"></div>
+    </div>
+    <div class='container' id="auth">
+        <div class='section'>
+            <h1>GeoguesSerge Login</h1>
+        </div>
+        <div class='section'>
+            <form id='sign-up'>
+                <h3>Sign Up</h3>
+                <label>Email</label><input type='email' name='email' />
+                <label>Password</label><input type='password' name='password' />
+                <input type='submit'>
+            </form>
+        </div>
+        <div class='section'>
+            <form id='log-in'>
+                <h3>Log In</h3>
+                <label>Email</label><input type='email' name='email' />
+                <label>Password</label><input type='password' name='password' />
+                <input type='submit'>
+            </form>
+        </div>
+        <div class='section'>
+            <h3>Logout</h3>
+            <button id='logout-button'>Logout</button>
+        </div>
+    </div>
 </body>
 <footer>
     <script src="script.js"></script>
+    <script src="auth.js"></script>
+    <script src="game.js"></script>
 </footer>
 </html>
