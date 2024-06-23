@@ -1,3 +1,9 @@
+
+const supabaseUrl = 'https://rglwwchomsjdplbpbvmu.supabase.co'
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJnbHd3Y2hvbXNqZHBsYnBidm11Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTkwNTk3NzUsImV4cCI6MjAzNDYzNTc3NX0.nqWlhycZYDT-8KKjECYdJXx4Ezt4Mtc5nfOSFGHpqUwy'
+const db_client = supabase.createClient(supabaseUrl, supabaseKey)
+
+
 var map = L.map('mapid').setView([51.505, -0.09], 2); // Centrer la carte sur une vue globale
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
