@@ -159,56 +159,86 @@ async function onValidateBtnClick() {
  */
 async function getBestScores(gameId, limit) {
     // Récupérer les meilleurs scores
-    const { data, error} = await db_client
-        .from('scores')
-        .select('user_id, score')
-        .eq('serge_pos_id', gameId)
-        .order('score', { ascending: false })
-        .limit(limit);
+    if (gameId){
+        const { data, error} = await db_client
+            .from('scores')
+            .select('user_id, score')
+            .eq('serge_pos_id', gameId)
+            .order('score', { ascending: false })
+            .limit(limit);
+        if (error) {
+            console.error('Error fetching data:', error);
+            alert('Erreur lors de la récupération des données: ' + error.message);
+            return [];
+        } else {
+            console.log('Scores récupérés:', data);
+    
+            // Formater les résultats
+            const formattedResults = data.map(entry => ({
+                user_id: entry.user_id,
+                score: entry.score
+            }));
+            return formattedResults;
+        }
+    }
+    else{
+        const { data, error} = await db_client
+            .from('scores')
+            .select('user_id, score')
+            .order('score', { ascending: false })
+            .limit(limit);
+        if (error) {
+            console.error('Error fetching data:', error);
+            alert('Erreur lors de la récupération des données: ' + error.message);
+            return [];
+        } else {
+            console.log('Scores récupérés:', data);
 
-    if (error) {
-        console.error('Error fetching data:', error);
-        alert('Erreur lors de la récupération des données: ' + error.message);
-        return [];
-    } else {
-        console.log('Scores récupérés:', data);
+            // Formater les résultats
+            const formattedResults = data.map(entry => ({
+                user_id: entry.user_id,
+                score: entry.score
+            }));
+            return formattedResults;
+        }
+    }
 
-        // Formater les résultats
-        const formattedResults = data.map(entry => ({
-            user_id: entry.user_id,
-            score: entry.score
-        }));
+}
 
-        return formattedResults;
+
+
+async function displayLeaderboard() {
+    try {
+        // Récupérer les scores actuels du jeu
+        const currentGameBestScores = await getBestScores("61cdfe5a-1c31-49a2-9cbf-d2360dbd0100", 5);
+        const currentBoard = document.getElementById('currentBoard');
+        currentBoard.innerHTML = '';
+        currentGameBestScores.forEach((score, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
+            currentBoard.appendChild(li);
+        });
+
+        // Récupérer les meilleurs scores de tous les temps
+        const allTimeBestScores = await getBestScores(null, 5);
+        const allTimeBoard = document.getElementById('allTimeBoard');
+        allTimeBoard.innerHTML = '';
+        allTimeBestScores.forEach((score, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
+            allTimeBoard.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Error retrieving scores:', error);
     }
 }
 
+document.addEventListener('DOMContentLoaded', (event) => {
+    displayLeaderboard();
+});
 
 
-function displayLeaderboard() {
-    // // TODO retrieve current leaderboard from database 'scores' table
-    // // with the current game position ID
-    const currentGameBestScores = getBestScores("61cdfe5a-1c31-49a2-9cbf-d2360dbd0100", 1);
-    // const allTimeBestScores = getBestScores(null, 5);
 
-    // const allTimeBoard = document.getElementById('allTimeBoard');
-    const currentBoard = document.getElementById('currentBoard');
-
-    // allTimeBoard.innerHTML = '';
-    currentBoard.innerHTML = '';
-
-    // allTimeBestScores.forEach((score, index) => {
-    //     const li = document.createElement('li');
-    //     li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
-    //     allTimeBoard.appendChild(li);
-    // });
-
-    // currentGameBestScores.forEach((score, index) => {
-    //     const li = document.createElement('li');
-    //     li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
-    //     currentBoard.appendChild(li);
-    // });
-}
 
 // Fonction pour ajouter un score
 async function addScore(score) {
