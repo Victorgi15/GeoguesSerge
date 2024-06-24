@@ -18,7 +18,7 @@ document.getElementById('validateBtn').addEventListener('click', async function 
 });
 
 // Afficher le leaderboard
-displayLeaderboard();
+displayLeaderboards();
 
 // Functions for the game
 function initMap() {
@@ -133,7 +133,7 @@ async function onValidateBtnClick() {
             await addScore(score);
     
             // Afficher le leaderboard
-            displayLeaderboard();
+            displayLeaderboards();
     
             // Marquer la fin du jeu
             gameInProgress = false;
@@ -190,10 +190,10 @@ async function displayScores(gameId, limit, boardId) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    displayLeaderboard();
+    displayLeaderboards();
 });
 
-async function displayLeaderboard() {
+async function displayLeaderboards() {
     try {
         // Récupérer et afficher les scores actuels du jeu
         await displayScores("61cdfe5a-1c31-49a2-9cbf-d2360dbd0100", 5, 'currentBoard');
