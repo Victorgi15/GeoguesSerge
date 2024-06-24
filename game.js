@@ -178,38 +178,6 @@ async function getBestScores(gameId, limit) {
 }
 
 
-
-
-async function displayLeaderboard() {
-    try {
-        // Récupérer les scores actuels du jeu
-        const currentGameBestScores = await getBestScores("61cdfe5a-1c31-49a2-9cbf-d2360dbd0100", 5);
-        const currentBoard = document.getElementById('currentBoard');
-        currentBoard.innerHTML = '';
-        currentGameBestScores.forEach((score, index) => {
-            const li = document.createElement('li');
-            li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
-            currentBoard.appendChild(li);
-        });
-
-        // Récupérer les meilleurs scores de tous les temps
-        const allTimeBestScores = await getBestScores(null, 5);
-        const allTimeBoard = document.getElementById('allTimeBoard');
-        allTimeBoard.innerHTML = '';
-        allTimeBestScores.forEach((score, index) => {
-            const li = document.createElement('li');
-            li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
-            allTimeBoard.appendChild(li);
-        });
-    } catch (error) {
-        console.error('Error retrieving scores:', error);
-    }
-}
-
-document.addEventListener('DOMContentLoaded', (event) => {
-    displayLeaderboard();
-});
-
 async function displayScores(gameId, limit, boardId) {
     const scores = await getBestScores(gameId, limit);
     const board = document.getElementById(boardId);
