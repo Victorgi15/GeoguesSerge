@@ -158,52 +158,25 @@ async function onValidateBtnClick() {
  * @param limit
  */
 async function getBestScores(gameId, limit) {
-    // Récupérer les meilleurs scores
-    if (gameId){
-        const { data, error} = await db_client
-            .from('scores')
-            .select('user_id, score')
-            .eq('serge_pos_id', gameId)
-            .order('score', { ascending: false })
-            .limit(limit);
-        if (error) {
-            console.error('Error fetching data:', error);
-            alert('Erreur lors de la récupération des données: ' + error.message);
-            return [];
-        } else {
-            console.log('Scores récupérés:', data);
-    
-            // Formater les résultats
-            const formattedResults = data.map(entry => ({
-                user_id: entry.user_id,
-                score: entry.score
-            }));
-            return formattedResults;
+    try {
+        let query = db_client.from('scores').select('user_id, score').order('score', { ascending: false }).limit(limit);
+        if (gameId) {
+            query = query.eq('serge_pos_id', gameId);
         }
-    }
-    else{
-        const { data, error} = await db_client
-            .from('scores')
-            .select('user_id, score')
-            .order('score', { ascending: false })
-            .limit(limit);
-        if (error) {
-            console.error('Error fetching data:', error);
-            alert('Erreur lors de la récupération des données: ' + error.message);
-            return [];
-        } else {
-            console.log('Scores récupérés:', data);
+        const { data, error } = await query;
+        if (error) throw error;
 
-            // Formater les résultats
-            const formattedResults = data.map(entry => ({
-                user_id: entry.user_id,
-                score: entry.score
-            }));
-            return formattedResults;
-        }
+        return data.map(entry => ({
+            user_id: entry.user_id,
+            score: entry.score
+        }));
+    } catch (error) {
+        console.error('Error fetching data:', error);
+        alert('Erreur lors de la récupération des données: ' + error.message);
+        return [];
     }
-
 }
+
 
 
 
@@ -237,7 +210,32 @@ document.addEventListener('DOMContentLoaded', (event) => {
     displayLeaderboard();
 });
 
+async function displayScores(gameId, limit, boardId) {
+    const scores = await getBestScores(gameId, limit);
+    const board = document.getElementById(boardId);
+    board.innerHTML = '';
+    scores.forEach((score, index) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
+        board.appendChild(li);
+    });
+}
 
+document.addEventListener('DOMContentLoaded', () => {
+    displayLeaderboard();
+});
+
+async function displayLeaderboard() {
+    try {
+        // Récupérer et afficher les scores actuels du jeu
+        await displayScores("61cdfe5a-1c31-49a2-9cbf-d2360dbd0100", 5, 'currentBoard');
+
+        // Récupérer et afficher les meilleurs scores de tous les temps
+        await displayScores(null, 5, 'allTimeBoard');
+    } catch (error) {
+        console.error('Error retrieving scores:', error);
+    }
+}
 
 
 // Fonction pour ajouter un score
