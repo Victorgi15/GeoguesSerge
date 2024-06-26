@@ -33,6 +33,11 @@ const signUpSubmitted = async (event) => {
     const password = event.target[1].value;
     const pseudo = event.target[2].value;
 
+    if (!pseudo) {
+        alert('Veuillez entrer un pseudo.');
+        return;
+    }
+
     try {
         const response = await db_client.auth.signUp({ email, password });
         console.log('Sign Up Response:', response);  // Log entire response for debugging
@@ -44,11 +49,11 @@ const signUpSubmitted = async (event) => {
 
         const user = response.data.user;  // Corrected to access the user object
         if (!user) {
-            alert('User creation failed. No user returned.');
+            alert('La création de l\'utilisateur a échoué. Aucun utilisateur retourné.');
             return;
         }
 
-        // Adding the pseudo in the user_pseudo table
+        // Ajouter le pseudo dans la table user_pseudo
         const { error } = await db_client.from('user_pseudo').insert([{ user_uuid: user.id, user_pseudo: pseudo }]);
         if (error) {
             alert('Erreur lors de l\'ajout du pseudo : ' + error.message);
@@ -56,10 +61,11 @@ const signUpSubmitted = async (event) => {
             setToken(response);
         }
     } catch (err) {
-        console.error('Sign Up Error:', err);
+        console.error('Erreur d\'inscription :', err);
         alert('Erreur lors de la création du compte: ' + err.message);
     }
 };
+
 
 
 const logInSubmitted = (event) => {
@@ -109,4 +115,3 @@ function setToken(response) {
         alert('Token inputs not found in DOM.');
     }
 }
-
