@@ -27,20 +27,40 @@ db_client.auth.onAuthStateChange((event, session) => {
 });
 
 
-const signUpSubmitted = (event) => {
-    event.preventDefault()
-    const email = event.target[0].value
-    const password = event.target[1].value
+const signUpSubmitted = async (event) => {
+    event.preventDefault();
+    const email = event.target[0].value;
+    const password = event.target[1].value;
+    const pseudo = event.target[2].value;
 
-    db_client.auth
-        .signUp({email, password})
-        .then((response) => {
-            response.error ? alert(response.error.message) : setToken(response)
-        })
-        .catch((err) => {
-            alert(err)
-        })
-}
+    try {
+        const response = await db_client.auth.signUp({ email, password });
+        console.log('Sign Up Response:', response);  // Log entire response for debugging
+
+        if (response.error) {
+            alert(response.error.message);
+            return;
+        }
+
+        const user = response.data.user;  // Corrected to access the user object
+        if (!user) {
+            alert('User creation failed. No user returned.');
+            return;
+        }
+
+        // Adding the pseudo in the user_pseudo table
+        const { error } = await db_client.from('user_pseudo').insert([{ user_uuid: user.id, user_pseudo: pseudo }]);
+        if (error) {
+            alert('Erreur lors de l\'ajout du pseudo : ' + error.message);
+        } else {
+            setToken(response);
+        }
+    } catch (err) {
+        console.error('Sign Up Error:', err);
+        alert('Erreur lors de la création du compte: ' + err.message);
+    }
+};
+
 
 const logInSubmitted = (event) => {
     event.preventDefault()
@@ -66,7 +86,6 @@ const logoutSubmitted = (event) => {
         .then((_response) => {
             document.querySelector('#access-token').value = ''
             document.querySelector('#refresh-token').value = ''
-            alert('Logout successful')
         })
         .catch((err) => {
             alert(err.response.text)
@@ -74,7 +93,20 @@ const logoutSubmitted = (event) => {
 }
 
 function setToken(response) {
-    document.querySelector('#access-token').value = response.data.session.access_token
-    document.querySelector('#refresh-token').value = response.data.session.refresh_token
-    alert('Logged in as ' + response.data.user.email)
+    const session = response.data.session;
+    if (!session) {
+        alert('No session data available.');
+        return;
+    }
+
+    const accessTokenInput = document.querySelector('#access-token');
+    const refreshTokenInput = document.querySelector('#refresh-token');
+
+    if (accessTokenInput && refreshTokenInput) {
+        accessTokenInput.value = session.access_token;
+        refreshTokenInput.value = session.refresh_token;
+    } else {
+        alert('Token inputs not found in DOM.');
+    }
 }
+

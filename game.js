@@ -159,17 +159,49 @@ async function onValidateBtnClick() {
  */
 async function getBestScores(gameId, limit) {
     try {
-        let query = db_client.from('scores').select('user_id, score').order('score', { ascending: false }).limit(limit);
+        let query = db_client
+            .from('scores')
+            .select('user_id, score')
+            .order('score', { ascending: false })
+            .limit(limit);
+
         if (gameId) {
             query = query.eq('serge_pos_id', gameId);
         }
-        const { data, error } = await query;
-        if (error) throw error;
 
-        return data.map(entry => ({
-            user_id: entry.user_id,
+        const { data: scoresData, error: scoresError } = await query;
+        if (scoresError) throw scoresError;
+
+        console.log('Scores Data:', scoresData); // Vérifiez les données des scores récupérées
+
+        const userIds = scoresData.map(entry => entry.user_id);
+
+        console.log('User IDs:', userIds); // Vérifiez les user IDs utilisés pour la requête suivante
+
+        const { data: usersData, error: usersError } = await db_client
+            .from('user_pseudo')
+            .select('user_uuid, user_pseudo')
+            .in('user_uuid', userIds);
+
+        if (usersError) throw usersError;
+
+        console.log('Users Data:', usersData); // Vérifiez les données des utilisateurs récupérées
+
+        const usersMap = usersData.reduce((map, user) => {
+            map[user.user_uuid] = user.user_pseudo;
+            return map;
+        }, {});
+
+        console.log('Users Map:', usersMap); // Vérifiez la map des utilisateurs (user UUID -> pseudo)
+
+        const bestScores = scoresData.map(entry => ({
+            pseudo: usersMap[entry.user_id] || 'Unknown',
             score: entry.score
         }));
+
+        console.log('Best Scores:', bestScores); // Vérifiez les meilleurs scores finaux avec les pseudos
+
+        return bestScores;
     } catch (error) {
         console.error('Error fetching data:', error);
         alert('Erreur lors de la récupération des données: ' + error.message);
@@ -178,20 +210,24 @@ async function getBestScores(gameId, limit) {
 }
 
 
+
+
 async function displayScores(gameId, limit, boardId) {
-    const scores = await getBestScores(gameId, limit);
-    const board = document.getElementById(boardId);
-    board.innerHTML = '';
-    scores.forEach((score, index) => {
-        const li = document.createElement('li');
-        li.innerHTML = `<b>${index + 1}.</b> ${score.user_id} <b>${score.score}</b>`;
-        board.appendChild(li);
-    });
+    try {
+        const scores = await getBestScores(gameId, limit);
+        const board = document.getElementById(boardId);
+        board.innerHTML = '';
+        scores.forEach((score, index) => {
+            const li = document.createElement('li');
+            li.innerHTML = `<b>${index + 1}.</b> ${score.pseudo} <b>${score.score}</b>`;
+            board.appendChild(li);
+        });
+    } catch (error) {
+        console.error('Error displaying scores:', error);
+        // Afficher un message d'erreur à l'utilisateur si nécessaire
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    displayLeaderboards();
-});
 
 async function displayLeaderboards() {
     try {
@@ -204,6 +240,11 @@ async function displayLeaderboards() {
         console.error('Error retrieving scores:', error);
     }
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+    displayLeaderboards();
+});
+
 
 
 // Fonction pour ajouter un score
