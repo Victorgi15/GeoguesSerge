@@ -1,7 +1,6 @@
 //Variables for the game
 let marker;
 let currentSergePosition = getSergeCurrentPos();
-console.log("currentSergePosition", currentSergePosition)
 let guessLine;
 let gameInProgress = true; // Variable pour suivre l'état du jeu
 
@@ -81,10 +80,6 @@ async function getSergeCurrentPos() {
         }
     }
     
-// Autres fonctions et gestionnaires d'événements déjà présents dans game.js...
-
-// Fonction pour récupérer et afficher la date de la dernière position de Serge
-// Fonction pour récupérer et afficher la date de la dernière position de Serge au format français (jj/mm/aa)
 async function updateLastSergePositionDate() {
     const lastUpdateElement = document.getElementById('lastUpdate');
     if (!lastUpdateElement) return;
@@ -105,6 +100,31 @@ async function updateLastSergePositionDate() {
     }
 }
 
+// Fonction pour récupérer l'ID de la dernière partie en fonction de la date de la position
+async function get_current_gameId() {
+    try {
+        const { data, error } = await db_client
+            .from('Serge_Pos')
+            .select('id')
+            .order('position_date', { ascending: false })
+            .limit(1);
+
+        if (error) {
+            console.error('Erreur lors de la récupération de l\'ID de la partie :', error);
+            return null;
+        }
+
+        if (data.length === 0) {
+            console.warn('Aucune position de Serge trouvée dans la base de données.');
+            return null;
+        }
+
+        return data[0].id; // Renvoie l'ID de la dernière partie basée sur la date de position
+    } catch (error) {
+        console.error('Erreur lors de la récupération de l\'ID de la partie :', error);
+        return null;
+    }
+}
 
 
 
@@ -208,6 +228,9 @@ async function onValidateBtnClick() {
  */
 async function getBestScores(gameId, limit) {
     try {
+        // Attendre la résolution de currentSergePosition pour obtenir l'ID de la position de Serge
+        const sergePosition = await currentSergePosition;
+
         let query = db_client
             .from('scores')
             .select('user_id, score')
@@ -215,18 +238,13 @@ async function getBestScores(gameId, limit) {
             .limit(limit);
 
         if (gameId) {
-            query = query.eq('serge_pos_id', gameId);
+            query = query.eq('serge_pos_id', sergePosition.id); // Utiliser sergePosition.id comme ID de la position de Serge
         }
 
         const { data: scoresData, error: scoresError } = await query;
         if (scoresError) throw scoresError;
 
-        console.log('Scores Data:', scoresData); // Vérifiez les données des scores récupérées
-
         const userIds = scoresData.map(entry => entry.user_id);
-
-        console.log('User IDs:', userIds); // Vérifiez les user IDs utilisés pour la requête suivante
-
         const { data: usersData, error: usersError } = await db_client
             .from('user_pseudo')
             .select('user_uuid, user_pseudo')
@@ -234,22 +252,15 @@ async function getBestScores(gameId, limit) {
 
         if (usersError) throw usersError;
 
-        console.log('Users Data:', usersData); // Vérifiez les données des utilisateurs récupérées
-
         const usersMap = usersData.reduce((map, user) => {
             map[user.user_uuid] = user.user_pseudo;
             return map;
         }, {});
 
-        console.log('Users Map:', usersMap); // Vérifiez la map des utilisateurs (user UUID -> pseudo)
-
         const bestScores = scoresData.map(entry => ({
             pseudo: usersMap[entry.user_id] || 'Unknown',
             score: entry.score
         }));
-
-        console.log('Best Scores:', bestScores); // Vérifiez les meilleurs scores finaux avec les pseudos
-
         return bestScores;
     } catch (error) {
         console.error('Error fetching data:', error);
@@ -257,6 +268,7 @@ async function getBestScores(gameId, limit) {
         return [];
     }
 }
+
 
 
 
@@ -281,7 +293,7 @@ async function displayScores(gameId, limit, boardId) {
 async function displayLeaderboards() {
     try {
         // Récupérer et afficher les scores actuels du jeu
-        await displayScores("61cdfe5a-1c31-49a2-9cbf-d2360dbd0100", 5, 'currentBoard');
+        await displayScores(get_current_gameId(), 5, 'currentBoard');
 
         // Récupérer et afficher les meilleurs scores de tous les temps
         await displayScores(null, 5, 'allTimeBoard');
