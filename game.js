@@ -9,6 +9,8 @@ let gameInProgress = true; // Variable pour suivre l'état du jeu
 let observer = new MutationObserver(function () {
     if (!game_container.hidden) {
         initMap();
+        updateLastSergePositionDate();
+
     }
 });
 observer.observe(game_container, {attributes: true, childList: true});
@@ -59,6 +61,53 @@ async function getSergeCurrentPos() {
             }      
         }
     }
+
+    async function getLastSergePositionDate() {
+        try {
+            const { data, error } = await db_client
+                .from('Serge_Pos')
+                .select('position_date')
+                .order('position_date', { ascending: false })
+                .limit(1);
+    
+            if (error) {
+                throw error;
+            }
+    
+            return data[0]?.position_date || 'Unknown';
+        } catch (error) {
+            console.error('Error fetching last Serge position date:', error);
+            return 'Unknown';
+        }
+    }
+    
+// Autres fonctions et gestionnaires d'événements déjà présents dans game.js...
+
+// Fonction pour récupérer et afficher la date de la dernière position de Serge
+// Fonction pour récupérer et afficher la date de la dernière position de Serge au format français (jj/mm/aa)
+async function updateLastSergePositionDate() {
+    const lastUpdateElement = document.getElementById('lastUpdate');
+    if (!lastUpdateElement) return;
+
+    try {
+        const lastPositionDate = await getLastSergePositionDate(); // Supposons que getLastSergePositionDate() récupère la date dans un format ISO 8601
+
+        // Convertir la date au format français (jj/mm/aa)
+        const dateObj = new Date(lastPositionDate);
+        const day = dateObj.getDate().toString().padStart(2, '0');
+        const month = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+        const year = dateObj.getFullYear().toString().slice(2);
+
+        lastUpdateElement.textContent = `Dernière position de Serge mise à jour : ${day}/${month}/${year}`;
+    } catch (error) {
+        console.error('Erreur lors de la mise à jour de la date de la dernière position de Serge :', error);
+        lastUpdateElement.textContent = `Dernière position de Serge mise à jour : Inconnue`;
+    }
+}
+
+
+
+
 
 function onMapClick(e) {
     if (gameInProgress) {
