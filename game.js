@@ -280,7 +280,7 @@ async function displayScores(gameId, limit, boardId) {
         board.innerHTML = '';
         scores.forEach((score, index) => {
             const li = document.createElement('li');
-            li.innerHTML = `<b>${index + 1}.</b> ${score.pseudo} <b>${score.score}</b>`;
+            li.innerHTML = `<b>${index + 1}.</b> ${score.pseudo} : ${score.score}`; // Modifier ici pour inclure le pseudo
             board.appendChild(li);
         });
     } catch (error) {
