@@ -121,3 +121,73 @@ button:hover, .leaflet-control a:hover {
 .leaflet-control-attribution {
     display: none;
 }
+
+/* auth */
+#auth {
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    width: 100%;
+    max-width: 400px;
+    margin: 20px auto; /* Centrer horizontalement avec une marge top/bottom de 20px */
+}
+
+#auth .section {
+    margin-bottom: 20px;
+}
+
+#auth h1 {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+#auth h3 {
+    font-size: 1.5rem;
+    margin-bottom: 10px;
+}
+
+#auth form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#auth form label {
+    font-weight: bold;
+}
+
+#auth form input[type="email"],
+#auth form input[type="password"],
+#auth form input[type="text"],
+#auth form input[type="submit"] {
+    padding: 12px 20px;
+    border-radius: 6px;
+    background-color: rgba(0, 0, 0, 0.05); /* Couleur de fond gris clair */
+    color: black; /* Couleur du texte */
+    font-size: 1rem;
+    border: 1px solid rgba(0, 0, 0, 0.1); /* Bordure légère */
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+#auth form input[type="email"]:focus,
+#auth form input[type="password"]:focus,
+#auth form input[type="text"]:focus {
+    outline: none;
+    background-color: white; /* Fond blanc au focus */
+    border-color: #007BFF; /* Bordure bleue au focus */
+}
+
+#auth form input[type="submit"] {
+    background-color: #007BFF; /* Bouton de soumission bleu */
+    color: white; /* Texte blanc */
+    cursor: pointer;
+    transition: background-color 0.3s ease, box-shadow 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+#auth form input[type="submit"]:hover {
+    background-color: #0056b3;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
+}
+
