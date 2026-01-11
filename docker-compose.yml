@@ -1,0 +1,26 @@
+version: "3.8"
+
+services:
+  frontend:
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ${CI_REGISTRY_IMAGE:-local}/easymile-website-frontend:${APP_VERSION:-latest}
+    expose:
+      - "3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.easymile-website-frontend.rule=Host(`${FRONTEND_HOST}`)"
+      - "traefik.http.routers.easymile-website-frontend.entrypoints=websecure"
+      - "traefik.http.routers.easymile-website-frontend.tls.certresolver=letsencrypt"
+      - "traefik.http.services.easymile-website-frontend.loadbalancer.server.port=3000"
+      - "traefik.http.routers.easymile-website-frontend.priority=1"
+    networks:
+      - dokploy-network
+
+networks:
+  dokploy-network:
+    external: true
+    name: dokploy-network
